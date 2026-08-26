@@ -1,48 +1,65 @@
 # Sistema de Chamados — Nexa Solutions
 
-Projeto inicial para a disciplina de Manutenção e Evolução de Software.
-
-## Contexto
-
-A Nexa Solutions possui um sistema interno para abertura e acompanhamento de chamados de suporte.
-
-O projeto possui uma API REST desenvolvida em Django e uma interface HTML simples para consulta e cadastro de chamados.
+API de chamados internos desenvolvida em Django e Django REST Framework, com
+uma interface HTML simples para consulta e cadastro. Projeto da disciplina
+de Manutenção e Evolução de Software.
 
 ## Tecnologias
 
-- Python
-- Django
-- Django REST Framework
-- SQLite
-- Docker
-- Docker Compose
-- Git
+- Python 3.12 / Django 5 / Django REST Framework
+- PostgreSQL 16
+- Docker e Docker Compose
+- Git / GitHub (issues, branches e Pull Requests)
 
 ## Estrutura
 
 ```text
-backend/   # API Django
+backend/   # API Django (app "chamados")
 frontend/  # Interface HTML simples
-docs/      # Documentação e demandas
+docs/      # Documentação e demandas da empresa
 ```
 
-## Executar localmente
+## Como executar
+
+### 1. Configurar variáveis de ambiente
+
+Copie o arquivo de exemplo e ajuste os valores se necessário:
 
 ```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
+cp .env.example .env
 ```
 
-A API estará disponível em:
+O `.env` nunca deve ser versionado (já está no `.gitignore`); apenas o
+`.env.example`, com valores fictícios, faz parte do repositório.
 
-```text
-http://localhost:8000/api/chamados/
+### 2. Subir com Docker Compose
+
+```bash
+docker compose up --build
 ```
 
-## Observação
+O comando sobe dois serviços:
 
-A documentação deste projeto está incompleta. A dupla deverá melhorar este arquivo como parte da atividade.
+- `db`: PostgreSQL 16, com dados persistidos em volume nomeado (`pgdata`).
+- `api`: aplicação Django, que aguarda o banco ficar saudável
+  (`healthcheck`/`depends_on`), aplica as migrações automaticamente e sobe
+  em `http://localhost:8000`.
+
+A API estará disponível em `http://localhost:8000/api/chamados/`.
+
+Para acompanhar os logs: `docker compose logs -f api`.
+Para encerrar: `docker compose down` (os dados do banco continuam no
+volume; use `docker compose down -v` para descartá-los).
+
+### Frontend
+
+`frontend/index.html` é uma página estática sem build. Basta abrir o
+arquivo diretamente no navegador com a API rodando em `localhost:8000`.
+
+## Executando os testes
+
+Com os containers no ar:
+
+```bash
+docker compose exec api python manage.py test
+```
