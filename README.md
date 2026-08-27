@@ -38,12 +38,14 @@ O `.env` nunca deve ser versionado (já está no `.gitignore`); apenas o
 docker compose up --build
 ```
 
-O comando sobe dois serviços:
+O comando sobe três serviços:
 
 - `db`: PostgreSQL 16, com dados persistidos em volume nomeado (`pgdata`).
 - `api`: aplicação Django, que aguarda o banco ficar saudável
   (`healthcheck`/`depends_on`), aplica as migrações automaticamente e sobe
   em `http://localhost:8000`.
+- `frontend`: nginx servindo `frontend/index.html` em
+  `http://localhost:8080`.
 
 A API estará disponível em `http://localhost:8000/api/chamados/`.
 
@@ -53,8 +55,9 @@ volume; use `docker compose down -v` para descartá-los).
 
 ### Frontend
 
-`frontend/index.html` é uma página estática sem build. Basta abrir o
-arquivo diretamente no navegador com a API rodando em `localhost:8000`.
+Acesse `http://localhost:8080` com os containers no ar — nenhum passo
+manual extra é necessário. O backend libera CORS apenas para essa origem
+(variável `FRONTEND_ORIGIN` no `.env`).
 
 ## Executando os testes
 
@@ -96,9 +99,12 @@ curl -X POST http://localhost:8000/api/chamados/ \
   locais fora do Docker (ex.: `manage.py test` na máquina do
   desenvolvedor); dentro dos containers as variáveis já chegam via
   `env_file` do Compose.
-- **Sem CORS/serviço de frontend no Compose**: o critério de indicadores é
-  atendido pelo endpoint `GET /api/indicadores/`; a página estática em
-  `frontend/index.html` pode ser aberta diretamente no navegador.
+- **Frontend servido por `nginx:alpine` no Compose**: evita o passo manual
+  de abrir `frontend/index.html` como arquivo local, o que falharia por
+  CORS (origem `file://` não é aceita pelo navegador).
+- **CORS restrito a `FRONTEND_ORIGIN`**: `django-cors-headers` libera
+  apenas a origem do serviço `frontend` (`http://localhost:8080` por
+  padrão), em vez de liberar todas as origens.
 
 ## Fluxo de contribuição
 
